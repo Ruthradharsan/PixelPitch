@@ -1,0 +1,34 @@
+[
+  {
+    "app_name": "MyBank - Official",
+    "package_name": "com.mybank.app",
+    "publisher": "MyBank Ltd.",
+    "description": "Official MyBank app for UPI and banking.",
+    "store_url": "https://play.google.com/store/apps/details?id=com.mybank.app",
+    "icon_sha256": null
+  },
+  {
+    "app_name": "MyBank - Paytm Update",
+    "package_name": "com.mybank.app.update",
+    "publisher": "MyBank Updater Inc",
+    "description": "Update your MyBank UPI to the latest version. Click to update immediately.",
+    "store_url": "https://play.google.com/store/apps/details?id=com.mybank.app.update",
+    "icon_sha256": null
+  },
+  {
+    "app_name": "MyBannk",
+    "package_name": "com.mvb.bank.app",
+    "publisher": "MV Banking",
+    "description": "Fast banking and payments.",
+    "store_url": "https://play.google.com/store/apps/details?id=com.mvb.bank.app",
+    "icon_sha256": null
+  },
+  {
+    "app_name": "MyBank - Secure",
+    "package_name": "com.mybank.secure",
+    "publisher": "Trusted MyBank Partner",
+    "description": "Secure banking from MyBank",
+    "store_url": "https://play.google.com/store/apps/details?id=com.mybank.secure",
+    "icon_sha256": null
+  }
+]
