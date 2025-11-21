@@ -1,16 +1,3 @@
-"""
-fake_app_detector.py
-
-Minimal, self-contained detector prototype.
-
-Usage examples:
-  python fake_app_detector.py --brand "MyBank" --official_package "com.mybank.app" --mock
-  python fake_app_detector.py --input candidates.json --brand "MyBank" --official_package "com.mybank.app"
-
-Outputs:
- - evidence.json  (per-flagged-app evidence)
- - takedown_emails.txt (auto-generated email templates)
-"""
 import json, hashlib, difflib, argparse, os, datetime, textwrap
 
 def load_candidates(path):
@@ -27,10 +14,9 @@ def sha256_of_file(path):
 def string_similarity(a, b):
     if not a: a = ""
     if not b: b = ""
-    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio()  # 0..1
+    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 def package_similarity(pkg_a, pkg_b):
-    # simple token-based similarity plus sequence ratio
     if not pkg_a or not pkg_b: return 0.0
     tokens_a = pkg_a.split('.')
     tokens_b = pkg_b.split('.')
@@ -46,7 +32,6 @@ def keyword_signal(description, suspicious_keywords):
     return min(1.0, hits / max(1, len(suspicious_keywords)))
 
 def score_candidate(candidate, official, trusted_publishers, official_icon_hash):
-    # weights (tunable)
     weights = {
         "name": 0.35,
         "package": 0.25,
@@ -56,16 +41,12 @@ def score_candidate(candidate, official, trusted_publishers, official_icon_hash)
     }
     name_sim = string_similarity(candidate.get("app_name",""), official.get("brand_name",""))
     pkg_sim = package_similarity(candidate.get("package_name",""), official.get("official_package",""))
-    # icon similarity: simple exact-hash match (1.0 if exact, 0 otherwise)
     icon_hash = candidate.get("icon_sha256")
     icon_sim = 1.0 if (official_icon_hash and icon_hash and official_icon_hash == icon_hash) else 0.0
-    # publisher mismatch: 1.0 when publisher NOT in trusted list
     pub = candidate.get("publisher","").lower()
     publisher_mismatch = 0.0 if any(tp.lower() in pub for tp in trusted_publishers) else 1.0
-    # keyword signal
     suspicious = ["fake","scam","fraud","update","urgent","download now","immediately","customer care"]
     kw_sig = keyword_signal(candidate.get("description",""), suspicious)
-    # compute weighted "risk" where higher means more suspicious
     risk = (
         weights["name"] * name_sim +
         weights["package"] * pkg_sim +
@@ -73,7 +54,6 @@ def score_candidate(candidate, official, trusted_publishers, official_icon_hash)
         weights["publisher"] * publisher_mismatch +
         weights["keywords"] * kw_sig
     )
-    # scale to 0-100
     return {
         "risk_score": round(risk * 100, 2),
         "details": {
@@ -156,12 +136,10 @@ def main(args):
             return
         candidates = load_candidates(args.input)
 
-    # official metadata (what we consider ground truth)
     official = {
         "brand_name": args.brand or "MyBank",
         "official_package": args.official_package or "com.mybank.app"
     }
-    # trusted publishers (small curated list)
     trusted_publishers = [p.strip() for p in (args.trusted_publishers or "MyBank Ltd.,MyBank Official").split(",")]
     official_icon_hash = None
     if args.official_icon:
@@ -174,15 +152,12 @@ def main(args):
         row = {**c, **{"analysis": evidence}}
         results.append(row)
 
-    # sort by risk descending
     results_sorted = sorted(results, key=lambda x: x['analysis']['risk_score'], reverse=True)
 
-    # threshold for flagging (simple)
     threshold = args.threshold if args.threshold is not None else 50.0
 
     flagged = [r for r in results_sorted if r['analysis']['risk_score'] >= threshold]
 
-    # Write evidence JSON for flagged apps
     out = {
         "run_time": datetime.datetime.utcnow().isoformat() + 'Z',
         "brand": official['brand_name'],
@@ -195,7 +170,6 @@ def main(args):
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(out, f, indent=2)
 
-    # generate takedown emails
     emails = []
     for fapp in flagged:
         email = generate_takedown_email(fapp, fapp['analysis'])
@@ -206,7 +180,6 @@ def main(args):
             f.write('Subject: ' + e['subject'] + '\n\n')
             f.write(e['body'] + '\n' + ('-'*80) + '\n\n')
 
-    # print summary table
     print('\n=== Summary (top candidates) ===\n')
     for r in results_sorted:
         print(f"{r.get('app_name')} | {r.get('package_name')} | risk={r['analysis']['risk_score']}")
@@ -228,3 +201,4 @@ if __name__ == '__main__':
     p.add_argument('--emails', help='output emails text path')
     args = p.parse_args()
     main(args)
+
